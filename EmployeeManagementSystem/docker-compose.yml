@@ -1,71 +1,55 @@
-version: '3.9'
+version: '3.8'
 
 services:
-  database:
+  db:
     image: postgres:15
-    container_name: ems-postgres
+    container_name: ems-db
     restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 1234
-      POSTGRES_DB: EMSNew
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-123456}
+      POSTGRES_DB: ${DB_NAME:-EMSNew}
     ports:
       - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d EMSNew"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ${DB_NAME:-EMSNew}"]
       interval: 10s
       timeout: 5s
       retries: 5
 
   backend:
     build:
-      context: ./ems-backend
+      context: ./ems-backend-python
       dockerfile: Dockerfile
     container_name: ems-backend
-    ports:
-      - "8080:8080"
+    restart: always
+    env_file:
+      - .env
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://database:5432/EMSNew
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=1234
-      - TZ=Asia/Kolkata
-    depends_on:
-      database:
-        condition: service_healthy
-
-  chatbot:
-    build:
-      context: ./ems-chatbot
-      dockerfile: Dockerfile
-    container_name: ems-chatbot
+      - DB_HOST=db
+      - DB_PORT=5432
+      # The rest of the variables will be loaded from the .env file specified above
     ports:
       - "8000:8000"
-    environment:
-      - DB_HOST=database
-      - DB_PORT=5432
-      - DB_NAME=EMSNew
-      - DB_USER=postgres
-      - DB_PASSWORD=1234
-      - GROQ_API_KEY=${GROQ_API_KEY}
     depends_on:
-      database:
+      db:
         condition: service_healthy
 
   frontend:
     build:
       context: ./ems-frontend
       dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE_URL=${VITE_API_BASE_URL:-/api}
     container_name: ems-frontend
+    restart: always
     ports:
-      - "5173:5173"
-    environment:
-      - VITE_API_BASE_URL=http://localhost:8080
-      - VITE_CHATBOT_API_URL=http://localhost:8000/api/chatbot
-      - VITE_PARSER_URL=http://localhost:8000
-      - BACKEND_URL=http://backend:8080
+      - "80:80"
     depends_on:
       - backend
-      - chatbot
 
 volumes:
   postgres_data:

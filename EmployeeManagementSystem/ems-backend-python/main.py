@@ -27,8 +27,12 @@ scheduler.add_job(mark_holidays_and_weekends, CronTrigger(hour=0, minute=1, time
 scheduler.add_job(leave_year_end_reset, CronTrigger(month=1, day=1, hour=0, minute=5, timezone="Asia/Kolkata"), id="leave_year_end")
 
 
+from seed import seed_db
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Ensure database is seeded
+    seed_db()
     scheduler.start()
     logging.info("APScheduler started")
     yield
