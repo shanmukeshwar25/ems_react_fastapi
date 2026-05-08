@@ -27,7 +27,7 @@ def seed_db():
                 db.add(Roles(role=role_name))
         db.commit()
         
-        # 3. Seed Initial Admin (TT0001)
+        # 3. Seed/Update Initial Admin (TT0001)
         admin_emp = db.query(Employee).filter(Employee.emp_id == "TT0001").first()
         if not admin_emp:
             admin_emp = Employee(
@@ -48,21 +48,23 @@ def seed_db():
             db.add(admin_emp)
             db.commit()
             
-            admin_user = User(
-                emp_id="TT0001",
-                password=hash_password("admin@123"),
-                is_user_active=True
-            )
+        admin_user = db.query(User).filter(User.emp_id == "TT0001").first()
+        if not admin_user:
+            admin_user = User(emp_id="TT0001", password=hash_password("admin@123"), is_user_active=True)
             db.add(admin_user)
-            db.commit()
+        else:
+            # Force update password to admin@123
+            admin_user.password = hash_password("admin@123")
+        db.commit()
             
-            # Assign all roles to admin
-            all_roles = db.query(Roles).all()
-            from models.roles import UserRoles
-            for r in all_roles:
-                user_role = UserRoles(emp_id="TT0001", role_id=r.role_id)
-                db.add(user_role)
-            db.commit()
+        # Ensure all roles assigned to admin
+        all_roles = db.query(Roles).all()
+        from models.roles import UserRoles
+        for r in all_roles:
+            exists = db.query(UserRoles).filter(UserRoles.emp_id == "TT0001", UserRoles.role_id == r.role_id).first()
+            if not exists:
+                db.add(UserRoles(emp_id="TT0001", role_id=r.role_id))
+        db.commit()
 
         # 4. Seed User TT0004
         user_04_emp = db.query(Employee).filter(Employee.emp_id == "TT0004").first()
