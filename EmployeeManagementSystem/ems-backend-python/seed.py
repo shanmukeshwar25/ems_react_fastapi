@@ -7,6 +7,8 @@ from models.user import User
 from models.enums import RolesEnum
 from sqlalchemy import text
 
+from core.security import hash_password
+
 logger = logging.getLogger(__name__)
 
 def seed_db():
@@ -15,12 +17,6 @@ def seed_db():
         # 1. Ensure tables and sequences are created
         Base.metadata.create_all(bind=engine)
         
-        # DEBUG: Check current DB and tables
-        current_db = db.execute(text("SELECT current_database()")).scalar()
-        existing_tables = db.execute(text("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'")).fetchall()
-        logger.info(f"CONNECTED TO DATABASE: {current_db}")
-        logger.info(f"EXISTING TABLES IN PUBLIC SCHEMA: {[t[0] for t in existing_tables]}")
-
         db.execute(text("CREATE SEQUENCE IF NOT EXISTS emp_id_seq START 1"))
         db.commit()
         
@@ -31,7 +27,7 @@ def seed_db():
                 db.add(Roles(role=role_name))
         db.commit()
         
-        # 3. Seed Initial Admin (TT0001) if not exists
+        # 3. Seed Initial Admin (TT0001)
         admin_emp = db.query(Employee).filter(Employee.emp_id == "TT0001").first()
         if not admin_emp:
             admin_emp = Employee(
@@ -46,17 +42,15 @@ def seed_db():
                 skills="Java, Spring Boot, PostgreSQL, ReactJS,Docker,Python,AI,HTML,CSS",
                 date_of_join="2025-12-15",
                 date_of_birth="2003-02-17",
-                description="Backend developer with 2 years of experience",
                 gender="MALE",
                 is_employee_active=True
             )
             db.add(admin_emp)
             db.commit()
             
-            # Seed User for admin
             admin_user = User(
                 emp_id="TT0001",
-                password="$2a$12$5gHPxFcrc4tbgYsIqDWqy.EuT6lnWzQwDQvZwpLBAL/1oj4LRab/C", # Mouni@1702
+                password=hash_password("admin@123"),
                 is_user_active=True
             )
             db.add(admin_user)
@@ -69,6 +63,34 @@ def seed_db():
                 user_role = UserRoles(emp_id="TT0001", role_id=r.role_id)
                 db.add(user_role)
             db.commit()
+
+        # 4. Seed User TT0004
+        user_04_emp = db.query(Employee).filter(Employee.emp_id == "TT0004").first()
+        if not user_04_emp:
+            user_04_emp = Employee(
+                emp_id="TT0004",
+                name="Test User 04",
+                company_email="test04@tektalis.com",
+                is_employee_active=True
+            )
+            db.add(user_04_emp)
+            db.commit()
+            
+            user_04 = User(
+                emp_id="TT0004",
+                password=hash_password("admin@123"),
+                is_user_active=True
+            )
+            db.add(user_04)
+            db.commit()
+            
+            # Assign USER role
+            user_role_obj = db.query(Roles).filter(Roles.role == RolesEnum.USER).first()
+            if user_role_obj:
+                from models.roles import UserRoles
+                db.add(UserRoles(emp_id="TT0004", role_id=user_role_obj.role_id))
+            db.commit()
+
             
             # Update sequence
             db.execute(text("ALTER SEQUENCE emp_id_seq RESTART WITH 2"))
