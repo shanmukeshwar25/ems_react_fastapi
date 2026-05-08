@@ -9,7 +9,6 @@ services:
     restart: always
     env_file:
       - .env
-      - ./ems-backend-python/.env
     ports:
       - "8000:8000"
     extra_hosts:

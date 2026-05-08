@@ -65,7 +65,9 @@ class Settings(BaseSettings):
     default_page_size: int = 10
 
     class Config:
-        env_file = ".env"
+        # Docker injects env vars directly from docker-compose env_file.
+        # For running outside Docker, check parent dir .env as fallback.
+        env_file = ("../.env", ".env")
         env_file_encoding = "utf-8"
         extra = "ignore"
 
