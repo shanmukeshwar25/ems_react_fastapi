@@ -7,8 +7,9 @@ import { parseApiError } from '../utils/errorUtils'
 import { formatDate, formatWeek, firstWorkedDate } from '../utils/dateUtils'
 import useDocumentTitle from '../hooks/useDocumentTitle'
 import Pagination from '../components/ui/Pagination'
+import { BaseInput } from '../components/ui/BaseComponents'
 import TimesheetEntryForm from '../components/timesheet/TimesheetEntryForm'
-import { Timer, Users, CheckSquare, ChevronLeft, ChevronRight, Download } from 'lucide-react'
+import { Timer, Users, CheckSquare, ChevronLeft, ChevronRight, Download, Calendar } from 'lucide-react'
 import toast from 'react-hot-toast'
 import '../styles/timesheet.css'
 
@@ -456,14 +457,12 @@ ${rows.length === 0
         <div>
           <div className="card card-sm" style={{ marginBottom: 16 }}>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-              <div>
-                <label className="form-label">From</label>
-                <input type="date" className="form-input" value={myFrom} style={{ width: 160 }}
+              <div style={{ width: 180 }}>
+                <BaseInput label="From" type="date" value={myFrom}
                   onChange={e => { setMyFrom(e.target.value); setMyPage(0) }} />
               </div>
-              <div>
-                <label className="form-label">To</label>
-                <input type="date" className="form-input" value={myTo} style={{ width: 160 }}
+              <div style={{ width: 180 }}>
+                <BaseInput label="To" type="date" value={myTo}
                   onChange={e => { setMyTo(e.target.value); setMyPage(0) }} />
               </div>
               {(myFrom || myTo) && (
@@ -498,14 +497,12 @@ ${rows.length === 0
                     <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
-              <div>
-                <label className="form-label">From</label>
-                <input type="date" className="form-input" value={teamFrom} style={{ width: 160 }}
+              <div style={{ width: 180 }}>
+                <BaseInput label="From" type="date" value={teamFrom}
                   onChange={e => { setTeamFrom(e.target.value); setTeamPage(0) }} />
               </div>
-              <div>
-                <label className="form-label">To</label>
-                <input type="date" className="form-input" value={teamTo} style={{ width: 160 }}
+              <div style={{ width: 180 }}>
+                <BaseInput label="To" type="date" value={teamTo}
                   onChange={e => { setTeamTo(e.target.value); setTeamPage(0) }} />
               </div>
               {(teamEmpId || teamStatus || teamFrom || teamTo) && (

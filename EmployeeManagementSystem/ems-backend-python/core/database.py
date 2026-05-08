@@ -41,6 +41,10 @@ except Exception as e:
  
 # Auto-create tables
 try:
+    # Log how many tables are detected
+    table_names = list(Base.metadata.tables.keys())
+    logger.info(f"Detected {len(table_names)} tables in metadata: {', '.join(table_names)}")
+    
     Base.metadata.create_all(bind=engine)
     logger.info("✓ Database tables created/verified successfully")
 except Exception as e:

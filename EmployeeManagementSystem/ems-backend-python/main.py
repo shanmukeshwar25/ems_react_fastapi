@@ -4,8 +4,16 @@ Unified EMS Backend + Chatbot on port 8000.
 """
 
 import logging
-from contextlib import asynccontextmanager
+import sys
 
+# Configure logging immediately
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
+
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -27,8 +35,12 @@ scheduler.add_job(mark_holidays_and_weekends, CronTrigger(hour=0, minute=1, time
 scheduler.add_job(leave_year_end_reset, CronTrigger(month=1, day=1, hour=0, minute=5, timezone="Asia/Kolkata"), id="leave_year_end")
 
 
+from seed import seed_db
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Ensure database is seeded
+    seed_db()
     scheduler.start()
     logging.info("APScheduler started")
     yield
@@ -96,5 +108,4 @@ def health():
 # ── Run with uvicorn ──────────────────────────────────────────────────────────
 if __name__ == "__main__":
     import uvicorn
-    logging.basicConfig(level=logging.INFO)
     uvicorn.run("main:app", host="0.0.0.0", port=settings.port, reload=True)

@@ -12,6 +12,7 @@ import { formatDate } from '../utils/dateUtils'
 import { parseApiError } from '../utils/errorUtils'
 import { exportToCSV } from '../utils/csvUtils'
 import Skeleton from '../components/ui/Skeleton'
+import { BaseInput } from '../components/ui/BaseComponents'
 import InactiveEmployeesTable from '../components/ui/InactiveEmployeesTable'
 import ImportEmployeeSheet from '../components/excel/ImportEmployeeSheet'
 import toast from 'react-hot-toast'
@@ -141,8 +142,8 @@ export default function EmployeesPage() {
                 </select>
               </div>
               <div className="filter-field">
-                <label className="form-label">Joined After</label>
-                <input type="date" className="form-input" value={filterDate} onChange={e=>{setFilterDate(e.target.value);setSearchName('');setFilterDept('')}}/>
+                <BaseInput label="Joined After" type="date" value={filterDate} 
+                  onChange={e=>{setFilterDate(e.target.value);setSearchName('');setFilterDept('')}}/>
               </div>
               {hasFilters && <button className="btn btn-ghost btn-sm" onClick={clearFilters} style={{ alignSelf:'flex-end' }}>Clear</button>}
             </div>
