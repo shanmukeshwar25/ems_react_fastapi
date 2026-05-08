@@ -1,14 +1,15 @@
 {
   "cli": {
     "version": ">= 13.0.0",
-    "appVersionSource": "remote"
+    "appVersionSource": "remote",
+    "requireCommit": false
   },
   "build": {
     "development": {
       "developmentClient": true,
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://ems-backend-609x.onrender.com/api"
+        "EXPO_PUBLIC_API_URL": "https://ems-backend-zl35.onrender.com/api"
       }
     },
     "preview": {
@@ -18,7 +19,7 @@
       },
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://ems-backend-609x.onrender.com/api"
+        "EXPO_PUBLIC_API_URL": "https://ems-backend-zl35.onrender.com/api"
       }
     },
     "production": {
@@ -30,7 +31,7 @@
         "simulator": false
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://ems-backend-609x.onrender.com/api"
+        "EXPO_PUBLIC_API_URL": "https://ems-backend-zl35.onrender.com/api"
       }
     }
   },

@@ -28,7 +28,7 @@ services:
       - key: TZ
         value: Asia/Kolkata
       - key: CORS_ALLOWED_ORIGINS
-        value: https://ems-frontend-3a3h.onrender.com
+        value: https://ems-frontend-zngr.onrender.com
       - key: COOKIE_SECURE
         value: "true"
       - key: COOKIE_SAME_SITE
@@ -48,10 +48,10 @@ services:
         destination: /index.html
     envVars:
       - key: VITE_API_BASE_URL
-        value: https://ems-backend-609x.onrender.com/api
+        value: https://ems-backend-zl35.onrender.com/api
       - key: VITE_CHATBOT_API_URL
-        value: https://ems-backend-609x.onrender.com/api/chatbot
+        value: https://ems-backend-zl35.onrender.com/api/chatbot
       - key: VITE_PARSER_URL
-        value: https://ems-backend-609x.onrender.com
+        value: https://ems-backend-zl35.onrender.com
       - key: VITE_SESSION_TIMEOUT_MS
         value: "900000"

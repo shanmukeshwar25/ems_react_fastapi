@@ -59,8 +59,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "7823e03a-d332-4cfd-a547-2a959a9e3291"
+        "projectId": "26a3542b-d702-4345-83c8-ddb65fe93dd6"
       }
-    }
+    },
+    "owner": "kaustubhtektalis"
   }
 }
