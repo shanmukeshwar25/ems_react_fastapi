@@ -27,11 +27,7 @@ const DASHBOARD_QUOTES = [
   "Your effort today builds tomorrow's success.",
 ]
 
-async function fetchQuoteFromApi() {
-  const response = await fetch('https://api.quotable.io/random?tags=success|inspirational|motivational')
-  if (!response.ok) throw new Error('Failed to fetch quote')
-  return response.json()
-}
+// The quotable.io API was shut down, so we removed the fetchQuoteFromApi function.
 
 function hashString(value) {
   return value.split('').reduce((hash, char) => {
@@ -73,35 +69,26 @@ export default function DashboardPage() {
   const navigate = useNavigate()
   useDocumentTitle('Dashboard | TekSphere')
 
-  const { data: quoteData } = useQuery({
-    queryKey: ['dashboardQuote'],
-    queryFn: fetchQuoteFromApi,
-    staleTime: 1000 * 60 * 60,
-    cacheTime: 1000 * 60 * 60,
-    retry: false,
-  })
-
-  const quote = quoteData?.content
-    ? `${quoteData.content}${quoteData.author ? ` — ${quoteData.author}` : ''}`
-    : getUserQuote(user)
+  // Using local quotes since the 3rd party API is down
+  const quote = getUserQuote(user)
 
   const { openEmployeeSheet, setNewEmployeeSheetOpen } = useUIStore()
   const canViewAll = isAdmin() || isManager()
 
   // ── Admin / Manager queries ─────────────────────────────────────────────
-  const { data: activeData,   isLoading: isActiveLoading }   = useQuery({ queryKey: ['employees', 'active-summary'],  queryFn: () => employeeAPI.search({ page: 0, size: 5, sort: 'empId,desc' }), enabled: canViewAll })
-  const { data: inactiveData, isLoading: isInactiveLoading } = useQuery({ queryKey: ['employees', 'inactive-count'],  queryFn: () => employeeAPI.getInactive({ page: 0, size: 1 }), enabled: canViewAll })
-  const { data: allData,      isLoading: isAllLoading }      = useQuery({ queryKey: ['employees', 'dashboard-all'],   queryFn: () => employeeAPI.search({ page: 0, size: 2000 }), enabled: canViewAll })
+  const { data: activeData, isLoading: isActiveLoading } = useQuery({ queryKey: ['employees', 'active-summary'], queryFn: () => employeeAPI.search({ page: 0, size: 5, sort: 'empId,desc' }), enabled: canViewAll })
+  const { data: inactiveData, isLoading: isInactiveLoading } = useQuery({ queryKey: ['employees', 'inactive-count'], queryFn: () => employeeAPI.getInactive({ page: 0, size: 1 }), enabled: canViewAll })
+  const { data: allData, isLoading: isAllLoading } = useQuery({ queryKey: ['employees', 'dashboard-all'], queryFn: () => employeeAPI.search({ page: 0, size: 2000 }), enabled: canViewAll })
 
   // ── Employee self-service queries (enabled for non-admin/manager) ──────────
-  const { data: todayData }   = useQuery({ queryKey: ['attendance', 'today'], queryFn: () => attendanceAPI.getToday(), retry: 1, enabled: !canViewAll })
-  const { data: balanceData } = useQuery({ queryKey: ['leave', 'balance'],    queryFn: () => leaveAPI.getMyBalance(), enabled: !canViewAll })
+  const { data: todayData } = useQuery({ queryKey: ['attendance', 'today'], queryFn: () => attendanceAPI.getToday(), retry: 1, enabled: !canViewAll })
+  const { data: balanceData } = useQuery({ queryKey: ['leave', 'balance'], queryFn: () => leaveAPI.getMyBalance(), enabled: !canViewAll })
 
-  const activeCount     = isActiveLoading   ? null : activeData?.data?.totalElements   ?? 0
-  const inactiveCount   = isInactiveLoading ? null : inactiveData?.data?.totalElements ?? 0
-  const totalCount      = (activeCount !== null && inactiveCount !== null) ? activeCount + inactiveCount : null
+  const activeCount = isActiveLoading ? null : activeData?.data?.totalElements ?? 0
+  const inactiveCount = isInactiveLoading ? null : inactiveData?.data?.totalElements ?? 0
+  const totalCount = (activeCount !== null && inactiveCount !== null) ? activeCount + inactiveCount : null
   const recentEmployees = activeData?.data?.content || []
-  const allEmployees    = allData?.data?.content || []
+  const allEmployees = allData?.data?.content || []
 
   const deptMap = {}
   allEmployees.forEach(e => e.department?.split(',').forEach(d => {
@@ -286,43 +273,43 @@ export default function DashboardPage() {
                 <tbody>
                   {isActiveLoading
                     ? Array.from({ length: 5 }).map((_, i) => (
-                        <tr key={i}>
-                          <td>
-                            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                              <Skeleton height="36px" width="36px" borderRadius="50%" />
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                                <Skeleton height="16px" width="120px" />
-                                <Skeleton height="12px" width="160px" />
-                              </div>
+                      <tr key={i}>
+                        <td>
+                          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                            <Skeleton height="36px" width="36px" borderRadius="50%" />
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                              <Skeleton height="16px" width="120px" />
+                              <Skeleton height="12px" width="160px" />
                             </div>
-                          </td>
-                          <td><Skeleton height="22px" width="80px" borderRadius="100px" /></td>
-                          <td className="desktop-only"><Skeleton height="16px" width="100px" /></td>
-                          <td><Skeleton height="16px" width="80px" /></td>
-                        </tr>
-                      ))
+                          </div>
+                        </td>
+                        <td><Skeleton height="22px" width="80px" borderRadius="100px" /></td>
+                        <td className="desktop-only"><Skeleton height="16px" width="100px" /></td>
+                        <td><Skeleton height="16px" width="80px" /></td>
+                      </tr>
+                    ))
                     : recentEmployees.map(emp => (
-                        <tr key={emp.empId} style={{ cursor: 'pointer' }} onClick={() => openEmployeeSheet(emp.empId)}>
-                          <td>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                              {emp.profileImage ? (
-                                <img src={emp.profileImage} alt={emp.name} style={{ width:32, height:32, borderRadius:'50%', objectFit:'cover', border:'2px solid var(--border)' }}/>
-                              ) : (
-                                <div className="avatar">
-                                  {emp.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '??'}
-                                </div>
-                              )}
-                              <div>
-                                <div style={{ fontWeight: 500 }}>{emp.name}</div>
-                                <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{emp.companyEmail}</div>
+                      <tr key={emp.empId} style={{ cursor: 'pointer' }} onClick={() => openEmployeeSheet(emp.empId)}>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            {emp.profileImage ? (
+                              <img src={emp.profileImage} alt={emp.name} style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--border)' }} />
+                            ) : (
+                              <div className="avatar">
+                                {emp.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '??'}
                               </div>
+                            )}
+                            <div>
+                              <div style={{ fontWeight: 500 }}>{emp.name}</div>
+                              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{emp.companyEmail}</div>
                             </div>
-                          </td>
-                          <td><span className="badge badge-info">{emp.department}</span></td>
-                          <td className="desktop-only" style={{ color: 'var(--text-secondary)', fontSize: 13 }}>{emp.designation}</td>
-                          <td style={{ color: 'var(--text-muted)', fontSize: 13 }}>{formatDate(emp.dateOfJoin)}</td>
-                        </tr>
-                      ))
+                          </div>
+                        </td>
+                        <td><span className="badge badge-info">{emp.department}</span></td>
+                        <td className="desktop-only" style={{ color: 'var(--text-secondary)', fontSize: 13 }}>{emp.designation}</td>
+                        <td style={{ color: 'var(--text-muted)', fontSize: 13 }}>{formatDate(emp.dateOfJoin)}</td>
+                      </tr>
+                    ))
                   }
                 </tbody>
               </table>

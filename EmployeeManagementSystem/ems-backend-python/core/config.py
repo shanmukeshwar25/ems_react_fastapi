@@ -7,6 +7,10 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     # ── Database ──────────────────────────────────────────────────────────────
+    # Render provides DATABASE_URL as a single connection string.
+    # For local dev, we fall back to building it from individual DB_* vars.
+    database_url_env: str = ""  # mapped from DATABASE_URL env var
+
     db_host: str = "localhost"
     db_port: int = 5432
     db_name: str = "EMSNew"
@@ -15,6 +19,15 @@ class Settings(BaseSettings):
 
     @property
     def database_url(self) -> str:
+        # If Render provides DATABASE_URL, use it (convert postgres:// to postgresql+psycopg2://)
+        if self.database_url_env:
+            url = self.database_url_env
+            if url.startswith("postgres://"):
+                url = url.replace("postgres://", "postgresql+psycopg2://", 1)
+            elif url.startswith("postgresql://"):
+                url = url.replace("postgresql://", "postgresql+psycopg2://", 1)
+            return url
+        # Otherwise build from individual vars (local dev)
         return (
             f"postgresql+psycopg2://{self.db_user}:{self.db_password}"
             f"@{self.db_host}:{self.db_port}/{self.db_name}"
@@ -55,6 +68,11 @@ class Settings(BaseSettings):
         env_file = ".env"
         env_file_encoding = "utf-8"
         extra = "ignore"
+
+        # Map DATABASE_URL env var to our field name
+        fields = {
+            "database_url_env": {"env": "DATABASE_URL"},
+        }
 
 
 settings = Settings()
