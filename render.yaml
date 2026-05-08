@@ -35,8 +35,9 @@ services:
         value: None
 
   # ── React Frontend (Static Site — CDN, never sleeps) ──────────────────────
-  - type: static
+  - type: web
     name: ems-frontend
+    runtime: static
     rootDir: EmployeeManagementSystem/ems-frontend
     buildCommand: npm install && npm run build
     staticPublishPath: dist
