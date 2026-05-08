@@ -12,8 +12,17 @@ logger = logging.getLogger(__name__)
 def seed_db():
     db = SessionLocal()
     try:
-        # 1. Ensure tables are created
+        # 1. Ensure tables and sequences are created
         Base.metadata.create_all(bind=engine)
+        
+        # DEBUG: Check current DB and tables
+        current_db = db.execute(text("SELECT current_database()")).scalar()
+        existing_tables = db.execute(text("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'")).fetchall()
+        logger.info(f"CONNECTED TO DATABASE: {current_db}")
+        logger.info(f"EXISTING TABLES IN PUBLIC SCHEMA: {[t[0] for t in existing_tables]}")
+
+        db.execute(text("CREATE SEQUENCE IF NOT EXISTS emp_id_seq START 1"))
+        db.commit()
         
         # 2. Seed Roles
         for role_name in RolesEnum:

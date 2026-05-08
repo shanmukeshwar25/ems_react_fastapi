@@ -1,25 +1,6 @@
 version: '3.8'
 
 services:
-  db:
-    image: postgres:15
-    container_name: ems-db
-    restart: always
-    environment:
-      POSTGRES_USER: ${DB_USER:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-123456}
-      POSTGRES_DB: ${DB_NAME:-EMSNew}
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d ${DB_NAME:-EMSNew}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   backend:
     build:
       context: ./ems-backend-python
@@ -28,15 +9,11 @@ services:
     restart: always
     env_file:
       - .env
-    environment:
-      - DB_HOST=db
-      - DB_PORT=5432
-      # The rest of the variables will be loaded from the .env file specified above
+      - ./ems-backend-python/.env
     ports:
       - "8000:8000"
-    depends_on:
-      db:
-        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   frontend:
     build:
@@ -50,6 +27,3 @@ services:
       - "80:80"
     depends_on:
       - backend
-
-volumes:
-  postgres_data:

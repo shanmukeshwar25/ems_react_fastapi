@@ -295,13 +295,13 @@ function RecentHistoryPanel({ records, onEdit }) {
           </div>
         ) : (
           records.map((rec, i) => {
-          const date    = rec.attendanceDate || rec.date || (rec.checkIn ? rec.checkIn.split('T')[0] : null)
-          const inTime  = formatTimeStr(rec.checkInTime  || rec.checkIn)
-          const outTime = formatTimeStr(rec.checkOutTime || rec.checkOut)
-          const dur     = computeDur(rec)
-          const cfg     = STATUS_COLORS[rec.status] || { color:'var(--text-muted)', bg:'var(--bg-tertiary)' }
-          return (
-            <div key={rec.id ?? i} className="attendance-history-row">
+            const date    = rec.attendanceDate || rec.date || (rec.checkIn ? rec.checkIn.split('T')[0] : null)
+            const inTime  = formatTimeStr(rec.checkInTime  || rec.checkIn)
+            const outTime = formatTimeStr(rec.checkOutTime || rec.checkOut)
+            const dur     = computeDur(rec)
+            const cfg     = STATUS_COLORS[rec.status] || { color:'var(--text-muted)', bg:'var(--bg-tertiary)' }
+            return (
+              <div key={rec.id ?? i} className="attendance-history-row">
               <div className="attendance-history-date">
                 <div style={{ fontWeight:600, fontSize:14 }}>
                   {date ? new Date(date + 'T00:00:00').toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' }) : '—'}
@@ -328,9 +328,11 @@ function RecentHistoryPanel({ records, onEdit }) {
                 )}
               </div>
             </div>
-          )
+            )
+          })
         )}
       </div>
     </div>
   )
 }
+

@@ -1,12 +1,24 @@
-import { forwardRef, useState } from 'react'
-import { Eye, EyeOff, AlertCircle, ChevronDown } from 'lucide-react'
+import { Calendar, Eye, EyeOff, AlertCircle, ChevronDown } from 'lucide-react'
 
 export const BaseInput = forwardRef(function BaseInput(
   { label, error, icon: Icon, type='text', hint, readOnly, required, className='', ...props }, ref
 ) {
   const [showPass, setShowPass] = useState(false)
   const isPassword = type === 'password'
+  const isDate     = type === 'date'
   const inputType  = isPassword ? (showPass ? 'text' : 'password') : type
+
+  const handleCalendarClick = (e) => {
+    // Attempt to open the native date picker if supported
+    const input = e.currentTarget.previousSibling
+    if (input && input.showPicker) {
+      try {
+        input.showPicker()
+      } catch (err) {
+        console.warn("Picker failed", err)
+      }
+    }
+  }
 
   return (
     <div className="form-group">
@@ -20,7 +32,12 @@ export const BaseInput = forwardRef(function BaseInput(
       <div style={{ position:'relative' }}>
         <input ref={ref} type={inputType}
           className={`form-input ${error?'input-error':''} ${readOnly?'input-readonly':''} ${className}`}
-          style={{ borderColor:error?'var(--danger)':undefined, paddingRight:isPassword?44:undefined, background:readOnly?'var(--bg-tertiary)':undefined, cursor:readOnly?'not-allowed':undefined }}
+          style={{ 
+            borderColor:error?'var(--danger)':undefined, 
+            paddingRight: (isPassword || isDate) ? 44 : undefined,
+            background:readOnly?'var(--bg-tertiary)':undefined, 
+            cursor:readOnly?'not-allowed':undefined 
+          }}
           readOnly={readOnly} disabled={readOnly} {...props}/>
         {isPassword && (
           <button type="button" onClick={()=>setShowPass(v=>!v)}
@@ -28,7 +45,14 @@ export const BaseInput = forwardRef(function BaseInput(
             {showPass ? <EyeOff size={16}/> : <Eye size={16}/>}
           </button>
         )}
+        {isDate && !readOnly && (
+          <button type="button" onClick={handleCalendarClick}
+            style={{ position:'absolute', right:12, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'var(--text-muted)', padding:4 }} tabIndex={-1}>
+            <Calendar size={16}/>
+          </button>
+        )}
       </div>
+
       {hint && !error && <p style={{ fontSize:12, color:'var(--text-muted)', marginTop:4 }}>{hint}</p>}
       {error && <div className="form-error"><AlertCircle size={12}/> {error}</div>}
     </div>

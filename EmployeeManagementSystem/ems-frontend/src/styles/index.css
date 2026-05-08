@@ -198,6 +198,28 @@ img { max-width: 100%; display: block; }
 .search-box { position: relative; display: flex; align-items: center; }
 .search-box svg { position: absolute; left: 12px; color: var(--text-muted); pointer-events: none; }
 .search-box .form-input { padding-left: 36px; }
+
+/* ─── DATE INPUT CALENDAR FIX ───────────────────────────────────────────────── */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  border-radius: 4px;
+  margin-right: 2px;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+  padding: 4px;
+}
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+  background: var(--bg-hover);
+}
+[data-theme='dark'] input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.8) brightness(1.2); /* Makes icon white/visible in dark mode */
+}
+/* Ensure the input itself allows clicking to open picker in some browsers */
+input[type="date"] {
+  position: relative;
+}
+
 .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 16px; }
 .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 16px; }
 .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: 16px; }
