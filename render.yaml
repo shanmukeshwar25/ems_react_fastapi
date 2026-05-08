@@ -10,8 +10,8 @@ services:
     name: ems-backend
     runtime: docker
     plan: free
+    rootDir: EmployeeManagementSystem/ems-backend-python
     dockerfilePath: Dockerfile
-    dockerContext: ./EmployeeManagementSystem/ems-backend-python
     envVars:
       - key: DATABASE_URL
         fromDatabase:
