@@ -12,7 +12,7 @@ from core.config import settings
 logger = logging.getLogger(__name__)
  
 engine = create_engine(
-    settings.database_url,
+    settings.sqlalchemy_database_url,
     pool_pre_ping=True,
     pool_size=10,
     max_overflow=20,
@@ -57,5 +57,3 @@ def get_db() -> Generator[Session, None, None]:
         yield db
     finally:
         db.close()
- 
- 

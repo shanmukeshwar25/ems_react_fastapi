@@ -7,10 +7,10 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     # ── Database ──────────────────────────────────────────────────────────────
-    # Render provides DATABASE_URL as a single connection string.
-    # For local dev, we fall back to building it from individual DB_* vars.
-    database_url_env: str = ""  # mapped from DATABASE_URL env var
+    # Render provides DATABASE_URL. Pydantic-settings will pick it up automatically.
+    database_url: str = ""
 
+    # Individual vars (fallback for local dev)
     db_host: str = "localhost"
     db_port: int = 5432
     db_name: str = "EMSNew"
@@ -18,15 +18,16 @@ class Settings(BaseSettings):
     db_password: str = "1234"
 
     @property
-    def database_url(self) -> str:
-        # If Render provides DATABASE_URL, use it (convert postgres:// to postgresql+psycopg2://)
-        if self.database_url_env:
-            url = self.database_url_env
+    def sqlalchemy_database_url(self) -> str:
+        # If Render provides DATABASE_URL, use it (ensuring it uses postgresql+psycopg2://)
+        url = self.database_url
+        if url:
             if url.startswith("postgres://"):
-                url = url.replace("postgres://", "postgresql+psycopg2://", 1)
-            elif url.startswith("postgresql://"):
-                url = url.replace("postgresql://", "postgresql+psycopg2://", 1)
+                return url.replace("postgres://", "postgresql+psycopg2://", 1)
+            if url.startswith("postgresql://") and "+psycopg2" not in url:
+                return url.replace("postgresql://", "postgresql+psycopg2://", 1)
             return url
+            
         # Otherwise build from individual vars (local dev)
         return (
             f"postgresql+psycopg2://{self.db_user}:{self.db_password}"
@@ -70,11 +71,6 @@ class Settings(BaseSettings):
         env_file = ("../.env", ".env")
         env_file_encoding = "utf-8"
         extra = "ignore"
-
-        # Map DATABASE_URL env var to our field name
-        fields = {
-            "database_url_env": {"env": "DATABASE_URL"},
-        }
 
 
 settings = Settings()
