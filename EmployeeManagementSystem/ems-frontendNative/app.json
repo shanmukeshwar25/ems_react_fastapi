@@ -22,6 +22,7 @@
     },
     "android": {
       "package": "com.tektalis.ems",
+      "newArchEnabled": true,
       "versionCode": 1,
       "userInterfaceStyle": "automatic",
       "adaptiveIcon": {
@@ -48,7 +49,8 @@
         "expo-build-properties",
         {
           "android": {
-            "usesCleartextTraffic": true
+            "usesCleartextTraffic": true,
+            "newArchEnabled": true
           }
         }
       ]
