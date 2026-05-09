@@ -1,0 +1,67 @@
+{
+  "expo": {
+    "name": "TekSphere",
+    "slug": "tektalis-ems",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./src/assets/Tektalis_Icon_Square.png",
+    "scheme": "teksphere",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./src/assets/Tektalis_Logo_White.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0d0f14"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.tektalis.ems",
+      "userInterfaceStyle": "automatic"
+    },
+    "android": {
+      "package": "com.tektalis.ems",
+      "versionCode": 1,
+      "userInterfaceStyle": "automatic",
+      "adaptiveIcon": {
+        "foregroundImage": "./src/assets/Tektalis_Icon_Square.png",
+        "backgroundColor": "#0d0f14"
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "icon": "./src/assets/Tektalis_Icon_Square.png",
+          "color": "#ffffff",
+          "defaultChannel": "default"
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "26a3542b-d702-4345-83c8-ddb65fe93dd6"
+      }
+    },
+    "owner": "kaustubhtektalis"
+  }
+}
