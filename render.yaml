@@ -10,7 +10,7 @@ services:
     name: ems-backend
     runtime: docker
     plan: free
-    rootDir: EmployeeManagementSystem/ems-backend-python
+    rootDir: employeemanagementsystem/ems-backend-python
     dockerfilePath: Dockerfile
     envVars:
       - key: DATABASE_URL
@@ -38,7 +38,7 @@ services:
   - type: web
     name: ems-frontend
     runtime: static
-    rootDir: EmployeeManagementSystem/ems-frontend
+    rootDir: employeemanagementsystem/ems-frontend
     buildCommand: npm install && npm run build
     staticPublishPath: dist
     pullRequestPreviewsEnabled: false
