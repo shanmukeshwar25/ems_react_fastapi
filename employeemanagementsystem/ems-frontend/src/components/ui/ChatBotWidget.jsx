@@ -434,7 +434,10 @@ export default function ChatBotWidget({ onClose, onAction }) {
       })
       if (!res.ok) {
         let errDesc = '';
-        try { const errJson = await res.json(); errDesc = errJson.detail || ''; } catch { }
+        try {
+          const errJson = await res.json();
+          errDesc = errJson.detail || errJson.message || '';
+        } catch { }
         throw new Error(`API error ${res.status} - ${errDesc}`)
       }
       const data = await res.json()

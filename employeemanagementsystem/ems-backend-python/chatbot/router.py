@@ -3,12 +3,14 @@
 from __future__ import annotations
 import os, traceback
 from typing import Any, Optional
+from urllib.parse import urlparse
 import pandas as pd
 from dotenv import load_dotenv
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import create_engine
 
+from core.config import settings
 from chatbot.db_utils import (AUTO_FIELDS, SENSITIVE_KEYWORDS, get_next_id,
                                get_primary_key_column, get_record_by_id,
                                get_schema_preview, run_query)
@@ -22,6 +24,31 @@ class DBConfig(BaseModel):
     database: str; user: str; password: str
 
 def _default_db() -> DBConfig:
+    # 1. Try parsing settings.database_url or environment DATABASE_URL first
+    db_url = settings.database_url or os.getenv("DATABASE_URL")
+    if db_url:
+        try:
+            clean_url = db_url
+            if clean_url.startswith("postgresql+psycopg2://"):
+                clean_url = clean_url.replace("postgresql+psycopg2://", "postgresql://", 1)
+            elif clean_url.startswith("postgres://"):
+                clean_url = clean_url.replace("postgres://", "postgresql://", 1)
+            
+            parsed = urlparse(clean_url)
+            db_type = "postgres" if parsed.scheme == "postgresql" else parsed.scheme
+            
+            return DBConfig(
+                db_type=db_type,
+                host=parsed.hostname or "localhost",
+                port=parsed.port or 5432,
+                database=parsed.path.lstrip("/"),
+                user=parsed.username or "postgres",
+                password=parsed.password or ""
+            )
+        except Exception as e:
+            traceback.print_exc()
+
+    # 2. Otherwise fallback to individual env vars
     return DBConfig(db_type=os.getenv("DB_TYPE","postgres"), host=os.getenv("DB_HOST","localhost"),
                     port=int(os.getenv("DB_PORT","5432")), database=os.getenv("DB_NAME","EMSNew"),
                     user=os.getenv("DB_USER","postgres"), password=os.getenv("DB_PASSWORD","1234"))
@@ -67,7 +94,11 @@ def nl_query(req: QueryRequest):
             raise HTTPException(500, "Could not generate a valid SQL query. Check the Groq API key and backend logs.")
         result = run_query(engine, sql)
         if isinstance(result, pd.DataFrame):
-            return {"sql":sql,"columns":list(result.columns),"rows":result.to_dict(orient="records"),"row_count":len(result),"chart_type":chart_meta["chart_type"] if chart_meta else None,"message":None,"action":None,"entity":None,"label":None}
+            # Replace NaN / inf / -inf (from NULL DB columns) with None so JSON serialisation never fails
+            safe_df = result.where(pd.notna(result), other=None)
+            rows = [{k: (None if isinstance(v, float) and (v != v or v == float("inf") or v == float("-inf")) else v)
+                     for k, v in row.items()} for row in safe_df.to_dict(orient="records")]
+            return {"sql":sql,"columns":list(result.columns),"rows":rows,"row_count":len(result),"chart_type":chart_meta["chart_type"] if chart_meta else None,"message":None,"action":None,"entity":None,"label":None}
         return {"sql":sql,"columns":[],"rows":[],"row_count":0,"chart_type":None,"message":result,"action":None,"entity":None,"label":None}
     except HTTPException: raise
     except Exception as exc: traceback.print_exc(); raise HTTPException(500, str(exc))
