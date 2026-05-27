@@ -55,6 +55,10 @@ INSERT INTO employees (
 ) ON CONFLICT (emp_id) DO NOTHING;
 
 
+
+-- The login password for TT0001 is admin@123
+
+
 INSERT INTO users (
     emp_id,
     password,
