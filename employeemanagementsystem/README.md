@@ -3,7 +3,7 @@
 ## Architecture
 | Service | Port | Stack |
 |---------|------|-------|
-| Spring Boot Backend | 8080 | Java 25, Spring Boot 4, Spring Security, JPA |
+
 | FastAPI Python | 8000 | FastAPI, Groq LLaMA, pdfplumber, psycopg2 |
 | React Frontend | 5173 | React 18, Vite, TanStack Query, Zustand |
 

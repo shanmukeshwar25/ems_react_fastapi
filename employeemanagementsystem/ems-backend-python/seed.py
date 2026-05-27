@@ -86,8 +86,8 @@ def seed_db():
             db.add(user_04)
             db.commit()
             
-            # Assign USER role
-            user_role_obj = db.query(Roles).filter(Roles.role == RolesEnum.USER).first()
+            # Assign EMPLOYEE role
+            user_role_obj = db.query(Roles).filter(Roles.role == RolesEnum.EMPLOYEE).first()
             if user_role_obj:
                 from models.roles import UserRoles
                 db.add(UserRoles(emp_id="TT0004", role_id=user_role_obj.role_id))

@@ -1,6 +1,22 @@
-version: '3.8'
+version: "3.8"
 
 services:
+
+  db:
+    image: postgres:15-alpine
+    container_name: ems-react-fastapi-db
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-pass}
+      POSTGRES_DB: ${DB_NAME:-EMSNew}
+    ports:
+      - "5432:5432"
+    volumes:
+      - ems-db-data:/var/lib/postgresql/data
+      # Optional: Mount your init.sql to auto-run on first startup if needed
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
   backend:
     build:
       context: ./ems-backend-python
@@ -9,10 +25,12 @@ services:
     restart: always
     env_file:
       - .env
+    environment:
+      - DB_HOST=db
     ports:
       - "8000:8000"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    depends_on:
+      - db
 
   frontend:
     build:
@@ -26,3 +44,6 @@ services:
       - "80:80"
     depends_on:
       - backend
+
+volumes:
+  ems-db-data:
