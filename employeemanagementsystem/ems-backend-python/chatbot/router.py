@@ -14,10 +14,25 @@ from core.config import settings
 from chatbot.db_utils import (AUTO_FIELDS, SENSITIVE_KEYWORDS, get_next_id,
                                get_primary_key_column, get_record_by_id,
                                get_schema_preview, run_query)
-from chatbot.llm_utils import detect_chart_intent, detect_crud_intent, get_sql_query_from_nl
+import re
+from chatbot.llm_utils import detect_chart_intent, detect_crud_intent, get_sql_query_from_nl, PG_ENUM_COLUMNS
 
 load_dotenv()
 router = APIRouter()
+
+# Collect all ENUM column names across all tables so we can safety-fix any ILIKE the LLM generates
+_ALL_ENUM_COLS: set[str] = {col for col in PG_ENUM_COLUMNS}
+
+
+def _fix_enum_ilike(sql: str) -> str:
+    """Replace `col ILIKE 'x'` with `CAST(col AS TEXT) ILIKE 'x'` for known ENUM columns."""
+    for col in _ALL_ENUM_COLS:
+        # matches: col ILIKE 'val'  or  alias.col ILIKE 'val'  (case-insensitive)
+        pattern = rf'(?<![\w.])([\w]+\.)?({re.escape(col)})\s+ILIKE\s+'
+        replacement = rf'\1CAST(\2 AS TEXT) ILIKE '
+        sql = re.sub(pattern, replacement, sql, flags=re.IGNORECASE)
+    return sql
+
 
 class DBConfig(BaseModel):
     db_type: str = "postgres"; host: str = "localhost"; port: int = 5432
@@ -92,6 +107,9 @@ def nl_query(req: QueryRequest):
         sql = get_sql_query_from_nl(sql_q, schema, db.db_type)
         if not sql:
             raise HTTPException(500, "Could not generate a valid SQL query. Check the Groq API key and backend logs.")
+        # Safety-net: rewrite any ILIKE on ENUM columns to CAST(...AS TEXT) ILIKE
+        if db.db_type == "postgres":
+            sql = _fix_enum_ilike(sql)
         result = run_query(engine, sql)
         if isinstance(result, pd.DataFrame):
             # Replace NaN / inf / -inf (from NULL DB columns) with None so JSON serialisation never fails

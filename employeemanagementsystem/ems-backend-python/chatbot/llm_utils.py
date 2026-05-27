@@ -106,6 +106,24 @@ def validate_sql(sql: str) -> tuple[bool, str]:
     return True, ""
 
 
+# Known PostgreSQL ENUM columns and their valid uppercase values
+PG_ENUM_COLUMNS = {
+    "status": {
+        "leave_requests":  ["PENDING", "APPROVED", "REJECTED", "CANCELLED"],
+        "attendance":      ["PRESENT", "ABSENT", "HALF_DAY", "LATE", "ON_LEAVE",
+                           "WORK_FROM_HOME", "HOLIDAY", "WEEKEND"],
+        "timesheets":      ["DRAFT", "SUBMITTED", "APPROVED", "REJECTED"],
+    },
+    "leave_type": {
+        "leave_requests":  ["ANNUAL", "SICK", "CASUAL", "SICK_CASUAL",
+                           "MATERNITY", "PATERNITY", "COMPENSATORY", "UNPAID"],
+    },
+    "role": {
+        "user_roles":      ["ADMIN", "MANAGER", "EMPLOYEE"],
+    },
+}
+
+
 def get_sql_query_from_nl(prompt: str, schema: dict, db_type: str) -> str | None:
     schema_parts = []
     for table, cols in schema.items():
@@ -120,10 +138,20 @@ def get_sql_query_from_nl(prompt: str, schema: dict, db_type: str) -> str | None
     sensitive_col_names = [c["name"] for cols in schema.values() for c in cols if c.get("sensitive")]
     sensitive_col_list = ", ".join(sensitive_col_names) or "none"
 
-    db_rules = """
-- Use ILIKE for case-insensitive text search.
+    # Build enum hint lines so the LLM knows which columns are ENUMs
+    enum_hints = []
+    for col, tables in PG_ENUM_COLUMNS.items():
+        for tbl, vals in tables.items():
+            enum_hints.append(f"  - {tbl}.{col} is an ENUM — valid values: {', '.join(vals)}")
+    enum_hint_text = "\n".join(enum_hints)
+
+    db_rules = f"""
+- Use ILIKE for case-insensitive text search on VARCHAR/TEXT columns only.
 - Use TRUE/FALSE for booleans.
 - For "compare X vs rest" use CASE-WHEN-GROUP-BY.
+- ENUM columns CANNOT use ILIKE or LIKE — use exact equality: column = 'VALUE' (values are UPPERCASE).
+- Known ENUM columns:
+{enum_hint_text}
 """ if db_type == "postgres" else "- Use LIKE for text search.\n"
 
     full_prompt = f"""You are a SQL expert for {db_type}. Output EXACTLY ONE valid SQL SELECT statement.
