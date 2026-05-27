@@ -221,7 +221,7 @@ function Message({ msg, onAction }) {
       <div style={{ maxWidth:'85%', display:'flex', flexDirection:'column', gap:8, alignItems:isUser?'flex-end':'flex-start' }}>
 
         {/* Bubble */}
-        <div style={{ background:isUser?'var(--accent)':'var(--bg-tertiary)', color:isUser?'white':'var(--text-primary)', padding:'10px 14px', borderRadius:isUser?'16px 4px 16px 16px':'4px 16px 16px 16px', fontSize:13, lineHeight:1.6, wordBreak:'break-word' }}>
+        <div style={{ background:isUser?'var(--accent)':'var(--bg-tertiary)', color:isUser?'white':'var(--text-primary)', padding:'10px 14px', borderRadius:isUser?'16px 4px 16px 16px':'4px 16px 16px 16px', fontSize:13, lineHeight:1.6, wordBreak:'break-word', whiteSpace:'pre-line' }}>
           {msg.content}
         </div>
 
@@ -472,9 +472,14 @@ export default function ChatBotWidget({ onClose, onAction }) {
         timestamp:  new Date().toISOString(),
       }])
     } catch (err) {
+      // Only show the port hint for genuine network failures (service not running)
+      const isNetworkError = err instanceof TypeError || err.message?.includes('Failed to fetch') || err.message?.includes('NetworkError')
+      const content = isNetworkError
+        ? `Sorry, I can't reach the backend. Make sure the Python service is running on port 8000.`
+        : `Sorry, I couldn't complete that request.\n\n${err.message || 'An unexpected error occurred.'}`
       setMessages(prev => [...prev, {
         role:      'assistant',
-        content:   `Sorry, I encountered an error: ${err.message}. Make sure the Python service is running on port 8000.`,
+        content,
         timestamp: new Date().toISOString(),
       }])
     } finally {

@@ -85,6 +85,55 @@ def _engine(cfg=None):
 def _resolve_db(cfg): return cfg or _default_db()
 def _safe_schema(schema): return {t: [{"name":c["name"],"type":c["type"],"nullable":c["nullable"],"sensitive":c.get("sensitive",False)} for c in cols] for t,cols in schema.items()}
 
+# ── EMS navigation hints used in friendly error messages ─────────────────────
+_EMS_HINTS: list[tuple[list[str], str]] = [
+    (["leave", "leaves", "annual", "sick", "casual", "maternity", "paternity"],
+     "📋 Go to **Leave Management** in the sidebar to view, apply, or manage leave requests."),
+    (["attendance", "present", "absent", "late", "work from home", "wfh"],
+     "📅 Go to **Attendance** in the sidebar to view and filter attendance records."),
+    (["employee", "staff", "department", "designation", "joining", "salary"],
+     "👤 Go to **Employees** in the sidebar to browse and filter employee data."),
+    (["timesheet", "hours", "work hours", "task", "project"],
+     "⏱ Go to **Timesheets** in the sidebar to view timesheet entries."),
+    (["holiday", "calendar", "public holiday", "weekend"],
+     "🗓 Go to **Holiday Calendar** in the sidebar to view holidays and non-working days."),
+    (["audit", "log", "activity", "history"],
+     "🔍 Go to **Audit Logs** (Admin panel) to review activity history."),
+    (["role", "permission", "admin", "manager"],
+     "⚙️ Go to **Roles & Permissions** in the Admin section to manage user roles."),
+]
+
+
+def _friendly_error(question: str, raw_result: str) -> str:
+    """Convert a raw ❌ SQL Error or ⚠️ Security Block into a helpful user-facing message."""
+    q = question.lower()
+
+    if raw_result.startswith("⚠️"):
+        # Security block (DROP / TRUNCATE)
+        hints = [
+            "🔒 Destructive database operations (DROP, TRUNCATE, DELETE all rows) are disabled for safety.",
+            "If you need to delete specific records, please use the relevant form in the EMS dashboard:",
+            "  • To cancel a leave → Leave Management → select request → Cancel",
+            "  • To remove an employee → Employees → select employee → Deactivate / Delete",
+            "  • To delete a timesheet → Timesheets → select entry → Delete",
+        ]
+        return "\n".join(hints)
+
+    # SQL execution error — build contextual navigation hints
+    nav = [h for kws, h in _EMS_HINTS if any(kw in q for kw in kws)]
+    if not nav:
+        nav = ["🏠 Navigate to the relevant section in the EMS sidebar to find the information you need."]
+
+    lines = [
+        "I wasn't able to run that query directly. Here's how you can get this information:",
+        "",
+    ] + nav + [
+        "",
+        "💡 *Tip: Try rephrasing your question — e.g. \"Show me all employees\" or \"List pending leaves\".*",
+    ]
+    return "\n".join(lines)
+
+
 @router.post("/connect")
 def connect(req: ConnectRequest):
     try:
@@ -117,9 +166,16 @@ def nl_query(req: QueryRequest):
             rows = [{k: (None if isinstance(v, float) and (v != v or v == float("inf") or v == float("-inf")) else v)
                      for k, v in row.items()} for row in safe_df.to_dict(orient="records")]
             return {"sql":sql,"columns":list(result.columns),"rows":rows,"row_count":len(result),"chart_type":chart_meta["chart_type"] if chart_meta else None,"message":None,"action":None,"entity":None,"label":None}
+        # run_query returns a plain string for errors / security blocks
+        if isinstance(result, str) and (result.startswith("❌") or result.startswith("⚠️")):
+            friendly = _friendly_error(req.question, result)
+            return {"sql":sql,"columns":[],"rows":[],"row_count":0,"chart_type":None,"message":friendly,"action":None,"entity":None,"label":None,"error":True}
         return {"sql":sql,"columns":[],"rows":[],"row_count":0,"chart_type":None,"message":result,"action":None,"entity":None,"label":None}
     except HTTPException: raise
-    except Exception as exc: traceback.print_exc(); raise HTTPException(500, str(exc))
+    except Exception as exc:
+        traceback.print_exc()
+        friendly = _friendly_error(req.question, f"❌ {exc}")
+        return {"sql":None,"columns":[],"rows":[],"row_count":0,"chart_type":None,"message":friendly,"action":None,"entity":None,"label":None,"error":True}
 
 @router.post("/schema")
 def get_schema(req: ConnectRequest):
