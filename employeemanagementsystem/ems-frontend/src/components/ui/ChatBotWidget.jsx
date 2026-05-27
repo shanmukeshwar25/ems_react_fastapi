@@ -220,10 +220,25 @@ function Message({ msg, onAction }) {
       </div>
       <div style={{ maxWidth: '85%', display: 'flex', flexDirection: 'column', gap: 8, alignItems: isUser ? 'flex-end' : 'flex-start' }}>
 
-        {/* Bubble */}
-        <div style={{ background: isUser ? 'var(--accent)' : 'var(--bg-tertiary)', color: isUser ? 'white' : 'var(--text-primary)', padding: '10px 14px', borderRadius: isUser ? '16px 4px 16px 16px' : '4px 16px 16px 16px', fontSize: 13, lineHeight: 1.6, wordBreak: 'break-word', whiteSpace: 'pre-line' }}>
-          {msg.content}
-        </div>
+        {/* Bubble — only show if there is content */}
+        {msg.content && (
+          <div style={{ background: isUser ? 'var(--accent)' : 'var(--bg-tertiary)', color: isUser ? 'white' : 'var(--text-primary)', padding: '10px 14px', borderRadius: isUser ? '16px 4px 16px 16px' : '4px 16px 16px 16px', fontSize: 13, lineHeight: 1.6, wordBreak: 'break-word', whiteSpace: 'pre-line' }}>
+            {msg.content}
+          </div>
+        )}
+
+        {/* Empty-result card */}
+        {msg.empty_result && (
+          <div style={{ background: 'var(--bg-tertiary)', border: '1px dashed var(--border)', borderRadius: 12, padding: '16px 20px', display: 'flex', alignItems: 'flex-start', gap: 12, maxWidth: 320 }}>
+            <span style={{ fontSize: 22, lineHeight: 1 }}>🔍</span>
+            <div>
+              <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--text-primary)', marginBottom: 4 }}>No results found</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.55 }}>
+                The query ran successfully but returned no matching records. The data you&apos;re looking for might not exist yet, or try rephrasing your question.
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Timestamp */}
         {msg.timestamp && (
@@ -458,14 +473,16 @@ export default function ChatBotWidget({ onClose, onAction }) {
 
       // ── Normal query response ─────────────────────────────────────────────
       const rowCount = data.row_count ?? 0
+      const isEmpty = !data.message && rowCount === 0
       const summary = data.message
         || (rowCount > 0
           ? `Found ${rowCount} result${rowCount !== 1 ? 's' : ''}.`
-          : 'Query ran successfully, no rows returned.')
+          : null)  // empty_result card handles the zero-rows case
 
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: summary,
+        content: summary || '',
+        empty_result: isEmpty,
         table_data: data.rows ?? [],
         chart_data: data.chart_type && data.rows?.length ? data.rows : null,
         chart_type: data.chart_type,
