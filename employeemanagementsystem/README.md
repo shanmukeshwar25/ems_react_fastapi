@@ -217,7 +217,7 @@ When the backend starts for the first time it seeds a default admin account:
 | Field | Value |
 |-------|-------|
 | Employee ID | `TT0001` |
-| Password | `Admin@123` |
+| Password | `admin@123` |
 
 > **Change this password immediately after first login.**
 
